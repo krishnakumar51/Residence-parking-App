@@ -95,38 +95,57 @@ class FloatingChatOverlay extends GetView<ChatController> {
                 borderRadius:
                     BorderRadius.vertical(bottom: Radius.circular(20)),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller.textController.value,
-                      focusNode: controller.focusNode,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide.none,
+                  Obx(() => controller.isListening.value
+                      ? Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            controller.recognizedText.value,
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink()),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller.textController.value,
+                          focusNode: controller.focusNode,
+                          decoration: InputDecoration(
+                            hintText: 'Type a message',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding:
+                                EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          onSubmitted: (_) => controller.sendMessage(),
                         ),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       ),
-                      onSubmitted: (_) => controller.sendMessage(),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Obx(() => IconButton(
-                        icon: Icon(
-                          controller.isListening.value
-                              ? Icons.mic
-                              : Icons.mic_none,
-                          color: Colors.blue,
-                        ),
-                        onPressed: controller.toggleListening,
-                      )),
-                  IconButton(
-                    icon: Icon(Icons.send, color: Colors.blue),
-                    onPressed: controller.sendMessage,
+                      SizedBox(width: 8),
+                      Obx(() => GestureDetector(
+                            onTapDown: (_) => controller.startListening(),
+                            onTapUp: (_) => controller.stopListening(),
+                            onTapCancel: () => controller.stopListening(),
+                            child: Icon(
+                              controller.isListening.value
+                                  ? Icons.mic
+                                  : Icons.mic_none,
+                              color: Colors.blue,
+                            ),
+                          )),
+                      IconButton(
+                        icon: Icon(Icons.send, color: Colors.blue),
+                        onPressed: () => controller.sendMessage(),
+                      ),
+                    ],
                   ),
                 ],
               ),

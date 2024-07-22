@@ -15,6 +15,7 @@ class ChatController extends GetxController {
 
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   var isListening = false.obs;
+  var recognizedText = "".obs;
 
   @override
   void onInit() {
@@ -55,19 +56,29 @@ class ChatController extends GetxController {
     });
   }
 
-  Future<void> toggleListening() async {
+  Future<void> startListening() async {
     final status = await Permission.microphone.status;
     if (status.isDenied) {
-      // This will prompt the permission dialog
       await Permission.microphone.request();
     }
 
     if (await Permission.microphone.isGranted) {
-      if (isListening.value) {
-        stopListening();
-      } else {
-        startListening();
-      }
+      isListening.value = true;
+      recognizedText.value = "";
+      await _speechToText.listen(
+        onResult: (result) {
+          recognizedText.value = result.recognizedWords;
+          if (result.finalResult) {
+            sendMessage(recognizedText.value);
+            stopListening();
+          }
+        },
+        listenFor: Duration(seconds: 30),
+        pauseFor: Duration(seconds: 3),
+        partialResults: true,
+        onSoundLevelChange: null,
+        cancelOnError: true,
+      );
     } else {
       Get.snackbar(
         'Permission Required',
@@ -78,31 +89,19 @@ class ChatController extends GetxController {
     }
   }
 
-  void startListening() async {
-    isListening.value = true;
-    await _speechToText.listen(
-      onResult: (result) {
-        textController.value.text = result.recognizedWords;
-      },
-      listenFor: Duration(seconds: 30),
-      pauseFor: Duration(seconds: 5),
-      partialResults: true,
-      onSoundLevelChange: null,
-      cancelOnError: true,
-    );
-  }
-
   void stopListening() {
     _speechToText.stop();
     isListening.value = false;
+    recognizedText.value = "";
   }
 
-  void sendMessage() {
-    if (textController.value.text.isNotEmpty) {
-      String userMessage = textController.value.text;
-      messages.insert(0, "You: $userMessage");
+  void sendMessage([String? voiceMessage]) {
+    String messageToSend = voiceMessage ?? textController.value.text;
+    if (messageToSend.isNotEmpty) {
+      messages.insert(0, "You: $messageToSend");
       textController.value.clear();
-      _processCommand(userMessage);
+      recognizedText.value = "";
+      _processCommand(messageToSend);
       _scrollToBottom();
     }
   }
