@@ -110,15 +110,16 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              if (voiceAssistantController.isListening.value)
-                _buildSlidingBar(),
+              _buildSlidingBar(),
               GestureDetector(
                 onTap: () => _showChatOverlay(context),
-                onLongPress: () {
-                  voiceAssistantController.listen();
+                onLongPressStart: (_) {
+                  voiceAssistantController.startListening();
+                },
+                onLongPressEnd: (_) {
+                  voiceAssistantController.stopListening();
                   _showChatOverlay(context);
                 },
-                onLongPressEnd: (_) => voiceAssistantController.stopListening(),
                 child: FloatingActionButton(
                   elevation: 8.0,
                   onPressed: () => _showChatOverlay(context),
@@ -134,34 +135,37 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSlidingBar() {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      width: voiceAssistantController.isListening.value ? 200 : 0,
-      height: 50,
-      margin: EdgeInsets.only(right: 10),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: Offset(0, 1),
+    return Obx(() => AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          width: voiceAssistantController.isListening.value ? 200 : 0,
+          height: 50,
+          margin: EdgeInsets.only(right: 10),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          voiceAssistantController.command.value.isEmpty
-              ? 'Listening...'
-              : voiceAssistantController.command.value,
-          style: TextStyle(fontSize: 16),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    );
+          child: Center(
+            child: Text(
+              // voiceAssistantController.isListening.value
+              //     ? (voiceAssistantController.command.value.isEmpty
+              //         ? 'Listening...'
+              //         : voiceAssistantController.command.value)
+              //     : '',
+              "Yes",
+              style: TextStyle(fontSize: 16),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ));
   }
 
   void _showChatOverlay(BuildContext context) {

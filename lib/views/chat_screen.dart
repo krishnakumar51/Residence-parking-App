@@ -8,8 +8,8 @@ class FloatingChatOverlay extends GetView<ChatController> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final overlayWidth = screenSize.width * 0.85; // 85% of screen width
-    final overlayHeight = screenSize.height * 0.55; // 60% of screen height
+    final overlayWidth = screenSize.width * 0.85;
+    final overlayHeight = screenSize.height * 0.55;
 
     return Material(
       type: MaterialType.card,
