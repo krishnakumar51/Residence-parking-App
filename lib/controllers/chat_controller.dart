@@ -127,91 +127,63 @@ class ChatController extends GetxController {
   }
 
   void _processCommand(String command) {
-    if (pendingCheckIn.value) {
-      _handleDurationInput(command);
-    } else if (command.toLowerCase().contains("check in")) {
-      _handleCheckIn(command);
-    } else if (command.toLowerCase().contains("check out")) {
+    final lowercaseCommand = command.toLowerCase();
+
+    if (_containsAny(lowercaseCommand, ['check in', 'checkin', 'parking'])) {
+      _handleCheckIn();
+    } else if (_containsAny(
+        lowercaseCommand, ['check out', 'checkout', 'leave'])) {
       _handleCheckOut();
-    } else if (command.toLowerCase() == "yes") {
-      _handleYesResponse();
-    } else if (command.toLowerCase() == "no") {
-      _handleNoResponse();
-    } else if (command.toLowerCase().contains("add vehicle")) {
+    } else if (_containsAny(
+        lowercaseCommand, ['add vehicle', 'new vehicle', 'register vehicle'])) {
       _handleAddVehicle(command);
+    } else if (_containsAny(lowercaseCommand, ['yes', 'confirm', 'proceed'])) {
+      _handleConfirmation();
+    } else if (_containsAny(lowercaseCommand, ['no', 'cancel', 'stop'])) {
+      _handleCancellation();
+    } else if (_containsAny(
+        lowercaseCommand, ['parking info', 'available spaces'])) {
+      _handleParkingInfo();
     } else {
-      _handleVehicleSelection(command);
+      _handleOtherCommands(lowercaseCommand);
     }
   }
 
-  void _handleCheckIn(String command) {
+  bool _containsAny(String text, List<String> keywords) {
+    return keywords.any((keyword) => text.contains(keyword));
+  }
+
+  void _handleCheckIn() {
     if (profileController.vehicles.isEmpty) {
-      String response =
-          "You haven't added any vehicles to your profile. Would you like to add a vehicle now? Say 'yes' to add a vehicle or 'no' to cancel.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
-    } else if (profileController.vehicles.length == 1) {
-      String response =
-          "You have one vehicle in your profile. Would you like to check in this vehicle? Say 'yes' to proceed or 'no' to cancel.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
-      selectedVehicleForCheckIn.value = profileController.vehicles[0];
+      _respondAndSpeak(
+          "You don't have any vehicles registered. Would you like to add a vehicle now?");
     } else {
-      String response =
-          "Which vehicle would you like to check in? Please say the brand and model of the vehicle.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      String vehicleList = profileController.vehicles
+          .map((v) => "${v.brand} ${v.model}")
+          .join(", ");
+      _respondAndSpeak(
+          "Which vehicle would you like to check in? Your options are: $vehicleList");
     }
   }
 
   void _handleCheckOut() {
     if (parkingController.parkings.isEmpty) {
-      String response = "You don't have any active parkings to check out.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
-    } else if (parkingController.parkings.length == 1) {
-      String response =
-          "You have one vehicle checked in. Would you like to check it out? Say 'yes' to proceed or 'no' to cancel.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak("You don't have any active parkings to check out.");
     } else {
-      String response =
-          "You have multiple vehicles checked in. Which one would you like to check out? Please say the brand and model of the vehicle.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      String parkingList = parkingController.parkings
+          .map((p) => "${p.brand} ${p.model}")
+          .join(", ");
+      _respondAndSpeak(
+          "Which vehicle would you like to check out? Your options are: $parkingList");
     }
-  }
-
-  void _handleYesResponse() {
-    if (messages.last.contains("Would you like to add a vehicle now?")) {
-      String response =
-          "Please say 'add vehicle' followed by the vehicle type, brand, and model. For example, 'add vehicle car Toyota Camry'.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
-    } else if (messages.last
-        .contains("Would you like to check in this vehicle?")) {
-      _askForDuration(profileController.vehicles[0]);
-    } else if (messages.last.contains("Would you like to check it out?")) {
-      _proceedWithCheckout(0);
-    } else if (messages.last
-        .contains("Would you like to confirm the check-in?")) {
-      Get.find<CheckInController>().confirmCheckIn();
-    }
-  }
-
-  void _handleNoResponse() {
-    String response =
-        "Operation cancelled. Is there anything else I can help you with?";
-    messages.insert(0, "Assistant: $response");
-    speak(response);
   }
 
   void _handleAddVehicle(String command) {
     List<String> parts = command.split(' ');
     if (parts.length >= 4) {
-      String type = parts[2];
-      String brand = parts[3];
-      String model = parts.sublist(4).join(' ');
+      String type = parts[parts.indexOf('vehicle') + 1];
+      String brand = parts[parts.indexOf('vehicle') + 2];
+      String model = parts.sublist(parts.indexOf('vehicle') + 3).join(' ');
 
       profileController.addVehicle(Vehicle(
           type: type,
@@ -219,56 +191,61 @@ class ChatController extends GetxController {
           model: model,
           imagePath: 'assets/images/car.jpeg'));
 
-      String response =
-          "Vehicle added successfully. Would you like to check in this vehicle now? Say 'yes' to proceed or 'no' to cancel.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak(
+          "Great! I've added the $brand $model to your profile. Would you like to check in with this vehicle now?");
     } else {
-      String response =
-          "I couldn't understand the vehicle details. Please try again with the format: 'add vehicle [type] [brand] [model]'.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak(
+          "I couldn't catch the vehicle details. Please use the format: 'add vehicle [type] [brand] [model]'.");
     }
   }
 
-  void _handleVehicleSelection(String command) {
+  void _handleConfirmation() {
+    if (pendingCheckIn.value) {
+      _proceedWithCheckIn(selectedVehicleForCheckIn.value!,
+          int.parse(Get.find<CheckInController>().durationController.text));
+    } else if (messages.last.contains("Would you like to check it out now?")) {
+      _proceedWithCheckout(0);
+    } else {
+      _respondAndSpeak(
+          "I'm not sure what you're confirming. Can you please provide more context?");
+    }
+  }
+
+  void _handleCancellation() {
+    pendingCheckIn.value = false;
+    selectedVehicleForCheckIn.value = null;
+    _respondAndSpeak(
+        "Alright, I've cancelled the current operation. Is there anything else I can help you with?");
+  }
+
+  void _handleParkingInfo() {
+    String carSpaces = parkingController.getAvailableSpaces('Car').toString();
+    String bikeSpaces = parkingController.getAvailableSpaces('Bike').toString();
+    _respondAndSpeak(
+        "Currently, there are $carSpaces car spaces and $bikeSpaces bike spaces available.");
+  }
+
+  void _handleOtherCommands(String command) {
     Vehicle? selectedVehicle = profileController.vehicles.firstWhereOrNull(
         (v) =>
-            command.toLowerCase().contains(v.brand.toLowerCase()) &&
-            command.toLowerCase().contains(v.model.toLowerCase()));
+            command.contains(v.brand.toLowerCase()) &&
+            command.contains(v.model.toLowerCase()));
 
     if (selectedVehicle != null) {
-      if (messages.last.contains("Which vehicle would you like to check in?")) {
-        _askForDuration(selectedVehicle);
-      } else if (messages.last
-          .contains("Which one would you like to check out?")) {
-        int index = parkingController.parkings.indexWhere((p) =>
-            p.brand.toLowerCase() == selectedVehicle.brand.toLowerCase() &&
-            p.model.toLowerCase() == selectedVehicle.model.toLowerCase());
-        if (index != -1) {
-          _proceedWithCheckout(index);
-        } else {
-          String response =
-              "I couldn't find that vehicle in the current parkings. Please try again.";
-          messages.insert(0, "Assistant: $response");
-          speak(response);
-        }
-      }
+      _askForDuration(selectedVehicle);
+    } else if (RegExp(r'\d+').hasMatch(command)) {
+      _handleDurationInput(command);
     } else {
-      String response =
-          "I couldn't find a vehicle matching that description. Please try again.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak(
+          "I'm not sure how to help with that. Can you try rephrasing or ask for check-in, check-out, or adding a vehicle?");
     }
   }
 
   void _askForDuration(Vehicle vehicle) {
     selectedVehicleForCheckIn.value = vehicle;
     pendingCheckIn.value = true;
-    String response =
-        "For how many hours would you like to check in the ${vehicle.brand} ${vehicle.model}?";
-    messages.insert(0, "Assistant: $response");
-    speak(response);
+    _respondAndSpeak(
+        "For how many hours would you like to check in the ${vehicle.brand} ${vehicle.model}?");
   }
 
   void _handleDurationInput(String command) {
@@ -280,10 +257,8 @@ class ChatController extends GetxController {
       pendingCheckIn.value = false;
       _proceedWithCheckIn(selectedVehicleForCheckIn.value!, hours);
     } else {
-      String response =
-          "I'm sorry, I couldn't understand the duration. Please say a number for the hours you want to check in.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak(
+          "I didn't catch the duration. Please tell me how many hours you'd like to park for.");
     }
   }
 
@@ -295,10 +270,8 @@ class ChatController extends GetxController {
       checkInController.selectedVehicle.value = vehicle;
       checkInController.durationController.text = duration.toString();
       checkInController.calculateCost();
-      String response =
-          "The cost for $duration hours is \$${checkInController.cost.value.toStringAsFixed(2)}. Would you like to confirm the check-in? Say 'yes' to confirm or 'no' to cancel.";
-      messages.insert(0, "Assistant: $response");
-      speak(response);
+      _respondAndSpeak(
+          "I've calculated the cost for $duration hours. It will be \$${checkInController.cost.value.toStringAsFixed(2)}. Would you like to confirm the check-in?");
     });
   }
 
@@ -306,5 +279,12 @@ class ChatController extends GetxController {
     ParkingController parkingController = Get.find();
     Get.to(() =>
         CheckoutScreen(index: index, spot: parkingController.parkings[index]));
+    _respondAndSpeak(
+        "I've initiated the check-out process for your ${parkingController.parkings[index].brand} ${parkingController.parkings[index].model}. Please follow the instructions on the screen to complete the process.");
+  }
+
+  void _respondAndSpeak(String message) {
+    messages.insert(0, "Assistant: $message");
+    speak(message);
   }
 }

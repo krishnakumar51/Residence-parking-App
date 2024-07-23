@@ -56,14 +56,16 @@ class CheckInController extends GetxController {
                 );
                 Get.find<ParkingController>().addParkingSpot(newParking);
                 Get.back();
-                Get.snackbar('Success', 'Check-In Confirmed');
+                Get.snackbar('Success', 'Check-In Confirmed',
+                    snackPosition: SnackPosition.BOTTOM);
 
                 // Added a delay to ensure snackbar displays before navigation
                 Future.delayed(const Duration(seconds: 1), () {
                   Get.offAll(() => const NavigationMenu());
                 });
               } else {
-                Get.snackbar('Error', 'No vehicle selected');
+                Get.snackbar('Error', 'No vehicle selected',
+                    snackPosition: SnackPosition.BOTTOM);
               }
             },
             child: const Text('Confirm'),

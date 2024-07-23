@@ -48,7 +48,8 @@ class ParkingInfoScreen extends StatelessWidget {
                           onPressed: () {
                             parkingController.checkOut(index);
                             Get.back(); // Close the dialog
-                            Get.snackbar('Success', 'Checked out successfully');
+                            Get.snackbar('Success', 'Checked out successfully',
+                                snackPosition: SnackPosition.BOTTOM);
                           },
                           child: const Text('Confirm'),
                         ),

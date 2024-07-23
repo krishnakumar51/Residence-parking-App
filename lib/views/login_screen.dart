@@ -43,7 +43,8 @@ class LoginScreen extends StatelessWidget {
                 if (authController.isAuthenticated.value) {
                   Get.off(HomeScreen());
                 } else {
-                  Get.snackbar('Error', 'Login failed');
+                  Get.snackbar('Error', 'Login failed',
+                      snackPosition: SnackPosition.BOTTOM);
                 }
               },
             ),

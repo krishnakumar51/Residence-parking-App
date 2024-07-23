@@ -48,7 +48,8 @@ class ProfileScreen extends StatelessWidget {
                 );
                 profileController.addVehicle(newVehicle);
                 Get.snackbar('Success',
-                    '${newVehicle.brand} ${newVehicle.model} successfully added');
+                    '${newVehicle.brand} ${newVehicle.model} successfully added',
+                    snackPosition: SnackPosition.BOTTOM);
 
                 // Clear the input fields after adding
                 profileController.brandController.clear();

@@ -131,14 +131,34 @@ class FloatingChatOverlay extends GetView<ChatController> {
                       ),
                       SizedBox(width: 8),
                       Obx(() => GestureDetector(
-                            onTapDown: (_) => controller.startListening(),
-                            onTapUp: (_) => controller.stopListening(),
-                            onTapCancel: () => controller.stopListening(),
-                            child: Icon(
-                              controller.isListening.value
-                                  ? Icons.mic
-                                  : Icons.mic_none,
-                              color: Colors.blue,
+                            onLongPressStart: (_) =>
+                                controller.startListening(),
+                            onLongPressEnd: (_) => controller.stopListening(),
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 200),
+                              padding: EdgeInsets.all(
+                                  controller.isListening.value ? 12 : 8),
+                              decoration: BoxDecoration(
+                                color: controller.isListening.value
+                                    ? Colors.blue.withOpacity(0.1)
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  if (controller.isListening.value)
+                                    PulsatingCircle(),
+                                  Icon(
+                                    controller.isListening.value
+                                        ? Icons.mic
+                                        : Icons.mic_none,
+                                    color: Colors.blue,
+                                    size:
+                                        controller.isListening.value ? 28 : 24,
+                                  ),
+                                ],
+                              ),
                             ),
                           )),
                       IconButton(
@@ -154,5 +174,49 @@ class FloatingChatOverlay extends GetView<ChatController> {
         ),
       ),
     );
+  }
+}
+
+class PulsatingCircle extends StatefulWidget {
+  @override
+  _PulsatingCircleState createState() => _PulsatingCircleState();
+}
+
+class _PulsatingCircleState extends State<PulsatingCircle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.8, end: 1.2).animate(_controller);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: 40 * _animation.value,
+          height: 40 * _animation.value,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.blue.withOpacity(0.3),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

@@ -39,7 +39,8 @@ class CheckoutScreen extends StatelessWidget {
                           Get.find<ParkingController>().checkOut(index);
                           Get.back();
                           Get.back(); // Close the CheckoutScreen
-                          Get.snackbar('Success', 'Checked out successfully');
+                          Get.snackbar('Success', 'Checked out successfully',
+                              snackPosition: SnackPosition.BOTTOM);
                         },
                         child: const Text('Confirm'),
                       ),
