@@ -116,25 +116,31 @@ class AddVehicleForm extends StatelessWidget {
             decoration: const InputDecoration(labelText: 'Model'),
             controller: profileController.modelController,
           ),
-          DropdownButton<String>(
-            value: profileController.selectedVehicleType.value,
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                profileController.setSelectedVehicleType(newValue);
-              }
-            },
-            items: <String>['Car', 'Bike', 'Truck']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
+          Obx(() => DropdownButton<String>(
+                value: profileController.selectedVehicleType.value,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    profileController.setSelectedVehicleType(newValue);
+                  }
+                },
+                items: <String>['Car', 'Bike', 'Truck']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              )),
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              profileController.addVehicle();
+              final newVehicle = userProfile.Vehicle(
+                brand: profileController.brandController.text,
+                model: profileController.modelController.text,
+                type: profileController.selectedVehicleType.value,
+                imagePath: profileController.vehicleImage.value,
+              );
+              profileController.addVehicle(newVehicle);
               Get.back();
             },
             child: const Text('Add Vehicle'),

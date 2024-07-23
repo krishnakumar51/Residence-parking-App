@@ -11,7 +11,7 @@ class Vehicle {
     required this.brand,
     required this.model,
     required this.type,
-    required this.imagePath,
+    this.imagePath = '',
   });
 }
 
@@ -30,9 +30,13 @@ class ProfileController extends GetxController {
     selectedVehicleType.value = type;
   }
 
-  void addVehicle() {
+  void addVehicle(Vehicle vehicle) {
+    vehicles.add(vehicle);
+  }
+
+  void addVehicleFromControllers() {
     if (brandController.text.isNotEmpty && modelController.text.isNotEmpty) {
-      vehicles.add(Vehicle(
+      addVehicle(Vehicle(
         brand: brandController.text,
         model: modelController.text,
         type: selectedVehicleType.value,

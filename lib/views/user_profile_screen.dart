@@ -40,9 +40,20 @@ class ProfileScreen extends StatelessWidget {
                 )),
             ElevatedButton(
               onPressed: () {
-                profileController.addVehicle();
+                final newVehicle = userProfile.Vehicle(
+                  brand: profileController.brandController.text,
+                  model: profileController.modelController.text,
+                  type: profileController.selectedVehicleType.value,
+                  imagePath: profileController.vehicleImage.value,
+                );
+                profileController.addVehicle(newVehicle);
                 Get.snackbar('Success',
-                    '${profileController.brandController.text} ${profileController.modelController.text} successfully added');
+                    '${newVehicle.brand} ${newVehicle.model} successfully added');
+
+                // Clear the input fields after adding
+                profileController.brandController.clear();
+                profileController.modelController.clear();
+                profileController.vehicleImage.value = '';
               },
               child: const Text('Add Vehicle'),
             ),
